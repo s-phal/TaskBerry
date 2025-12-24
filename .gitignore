@@ -1,0 +1,4 @@
+# Ignore all bin and obj directories in any subfolder
+**/bin/
+**/obj/
+**/*__virtual.html
