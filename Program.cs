@@ -6,7 +6,56 @@ class Program
 {
     static void Main(string[] args)
     {
-        ShowTask();
+
+        AnsiConsole.Clear();
+        AnsiConsole.WriteLine();
+        if (args.Length > 0)
+        {
+            string command = args[0];
+            string argument = args.Length > 1 ? args[1] : string.Empty;
+
+            switch (command)
+            {
+                case "add":
+                    if (!string.IsNullOrWhiteSpace(argument))
+                    {
+                        AnsiConsole.WriteLine($"parameters: {argument}");
+                    }
+                    else
+                    {
+                        AnsiConsole.WriteLine("Please enter a task.");
+                    }
+                    break;
+
+                case "done":
+                    if (IsPositiveInterger(argument))
+                    {
+                        AnsiConsole.WriteLine("Invalid Entry");
+                    }
+                    else
+                    {
+                        AnsiConsole.WriteLine("Please enter an ID.");
+                    }
+                    break;
+
+                case "list":
+                    ShowTask();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        else
+        {
+            ShowTask();
+        }
+        AnsiConsole.WriteLine();
+    }
+
+    static bool IsPositiveInterger(string input)
+    {
+        return int.TryParse(input, out var number) && number > 0;
     }
 
     static void ShowTask()
