@@ -9,47 +9,60 @@ class Program
 
         AnsiConsole.Clear();
         AnsiConsole.WriteLine();
-        if (args.Length > 0)
+
+        if (args.Length == 0)
         {
-            string command = args[0];
-            string argument = args.Length > 1 ? args[1] : string.Empty;
-
-            switch (command)
-            {
-                case "add":
-                    if (!string.IsNullOrWhiteSpace(argument))
-                    {
-                        AnsiConsole.WriteLine($"parameters: {argument}");
-                    }
-                    else
-                    {
-                        AnsiConsole.WriteLine("Please enter a task.");
-                    }
-                    break;
-
-                case "done":
-                    if (IsPositiveInterger(argument))
-                    {
-                        AnsiConsole.WriteLine("Invalid Entry");
-                    }
-                    else
-                    {
-                        AnsiConsole.WriteLine("Please enter an ID.");
-                    }
-                    break;
-
-                case "list":
-                    ShowTask();
-                    break;
-
-                default:
-                    break;
-            }
+            ShowAllTasks();
+            return;
         }
-        else
+
+        string command = args[0];
+        string argument = args.Length > 1 ? args[1] : string.Empty;
+
+        switch (command)
         {
-            ShowTask();
+            case "add":
+                if (string.IsNullOrWhiteSpace(argument))
+                {
+                    AnsiConsole.WriteLine("Please enter a task description.");
+                    break;
+                }
+                AnsiConsole.WriteLine($"parameters: {argument}");
+                break;
+
+            case "edit":
+                if (!IsPositiveInterger(argument))
+                {
+                    AnsiConsole.WriteLine("Please enter an ID.");
+                    break;
+                }
+                AnsiConsole.WriteLine($"parameters: {argument}");
+                break;
+
+            case "done":
+                if (!IsPositiveInterger(argument))
+                {
+                    AnsiConsole.WriteLine("Please enter an ID.");
+                    break;
+                }
+                AnsiConsole.WriteLine($"Task ID: {argument} completed.");
+                break;
+
+            case "list":
+                ShowAllTasks();
+                break;
+
+            case "help":
+            case "--help":
+            case "-h":
+                ShowHelpMenu();
+                break;
+
+            default:
+                ShowHelpMenu();
+                break;
         }
+
         AnsiConsole.WriteLine();
     }
 
@@ -58,7 +71,7 @@ class Program
         return int.TryParse(input, out var number) && number > 0;
     }
 
-    static void ShowTask()
+    static void ShowAllTasks()
     {
         AnsiConsole.Clear();
         AnsiConsole.WriteLine();
@@ -91,8 +104,8 @@ class Program
     static void ShowHelpMenu()
     {
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("Usage: [grey]dotnet [blue]run[/] [[options]] [[[[--]] <additional arguments>...]]]][/]");
-        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine("Usage:");
+        AnsiConsole.WriteLine("  task add <title> []");
 
         var grid = new Grid();
         grid.AddColumn(new GridColumn().NoWrap());
