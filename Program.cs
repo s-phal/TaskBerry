@@ -20,7 +20,7 @@ class Program
 
         string command = args[0];
         string argument = args.Length > 1 ? args[1] : string.Empty;
-
+        string flag = args.Length > 2 ? args[2] : string.Empty;
         switch (command)
         {
             case "add":
@@ -33,6 +33,7 @@ class Program
 
                 var taskItem = new TaskItem();
                 taskItem.Title = argument;
+                taskItem.Category = args.Length > 2 ? args[2] : string.Empty;
                 taskItem.Save();
 
                 AnsiConsole.WriteLine("Task added.");
