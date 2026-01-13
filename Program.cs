@@ -1,11 +1,14 @@
 ﻿namespace TaskBerry;
 
+using Microsoft.Data.Sqlite;
 using Spectre.Console;
 
 class Program
 {
     static void Main(string[] args)
     {
+
+        CreateDB();
 
         AnsiConsole.Clear();
         AnsiConsole.WriteLine();
@@ -53,8 +56,6 @@ class Program
                 break;
 
             case "help":
-            case "--help":
-            case "-h":
                 ShowHelpMenu();
                 break;
 
@@ -64,6 +65,26 @@ class Program
         }
 
         AnsiConsole.WriteLine();
+    }
+
+    static void CreateDB()
+    {
+        var connectionString = "Data Source=taskberry.db;";
+
+        using var connection = new SqliteConnection(connectionString);
+        connection.Open();
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = """
+            CREATE TABLE IF NOT EXISTS todo (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    category TEXT DEFAULT '',
+                    is_completed INTEGER NOT NULL DEFAULT 0
+                    );
+        """;
+
+        cmd.ExecuteNonQuery();
     }
 
     static bool IsPositiveInterger(string input)
