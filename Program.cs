@@ -1,14 +1,13 @@
 ﻿namespace TaskBerry;
 
-using Microsoft.Data.Sqlite;
 using Spectre.Console;
 
 class Program
 {
+
     static void Main(string[] args)
     {
-
-        CreateDB();
+        TaskItem.CreateTableIfNotExists();
 
         AnsiConsole.Clear();
         AnsiConsole.WriteLine();
@@ -28,10 +27,17 @@ class Program
                 if (string.IsNullOrWhiteSpace(argument))
                 {
                     AnsiConsole.WriteLine("Please enter a task description.");
-                    break;
+                    AnsiConsole.WriteLine();
+                    return;
                 }
-                AnsiConsole.WriteLine($"parameters: {argument}");
-                break;
+
+                var taskItem = new TaskItem();
+                taskItem.Title = argument;
+                taskItem.Save();
+
+                AnsiConsole.WriteLine("Task added.");
+                AnsiConsole.WriteLine();
+                return;
 
             case "edit":
                 if (!IsPositiveInterger(argument))
@@ -67,25 +73,6 @@ class Program
         AnsiConsole.WriteLine();
     }
 
-    static void CreateDB()
-    {
-        var connectionString = "Data Source=taskberry.db;";
-
-        using var connection = new SqliteConnection(connectionString);
-        connection.Open();
-
-        using var cmd = connection.CreateCommand();
-        cmd.CommandText = """
-            CREATE TABLE IF NOT EXISTS todo (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    category TEXT DEFAULT '',
-                    is_completed INTEGER NOT NULL DEFAULT 0
-                    );
-        """;
-
-        cmd.ExecuteNonQuery();
-    }
 
     static bool IsPositiveInterger(string input)
     {
@@ -97,23 +84,17 @@ class Program
         AnsiConsole.Clear();
         AnsiConsole.WriteLine();
 
-        var list = new List<TaskItem>
-        {
-            new() { Id = 1, Description = "Johnson Space Center" },
-            new() { Id = 2, Description = "Dude is it how?" , Category = "Walgreens" },
-            new() { Id = 3, Description = "Why though" },
-        };
-
+        var list = TaskItem.GetAll();
 
         var grid = new Grid();
         grid.AddColumn(new GridColumn());
         grid.AddColumn(new GridColumn());
         grid.AddColumn(new GridColumn().PadLeft(6).Alignment(Justify.Right));
-        grid.AddRow("ID", "Description", "Category");
+        grid.AddRow("ID", "Title", "Category");
         grid.AddRow("--", "-----------", "--------");
         foreach (var item in list)
         {
-            grid.AddRow(item.Id.ToString(), item.Description, item.Category);
+            grid.AddRow(item.Id.ToString(), item.Title, item.Category);
         }
         grid.AddRow();
         grid.AddRow(list.Count.ToString() + " task(s).");
@@ -143,10 +124,3 @@ class Program
 
 }
 
-public class TaskItem
-{
-    public int Id { get; set; }
-    public string Description { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-
-}
