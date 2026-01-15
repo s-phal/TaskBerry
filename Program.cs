@@ -1,7 +1,5 @@
 ﻿namespace TaskBerry;
 
-using Spectre.Console;
-
 class Program
 {
 
@@ -9,8 +7,8 @@ class Program
     {
         TaskItem.CreateTableIfNotExists();
 
-        AnsiConsole.Clear();
-        AnsiConsole.WriteLine();
+        Console.Clear();
+        Console.WriteLine();
 
         if (args.Length == 0)
         {
@@ -26,8 +24,8 @@ class Program
             case "add":
                 if (string.IsNullOrWhiteSpace(argument))
                 {
-                    AnsiConsole.WriteLine("Please enter a task description.");
-                    AnsiConsole.WriteLine();
+                    Console.WriteLine("Please enter a task description.");
+                    Console.WriteLine();
                     return;
                 }
 
@@ -36,26 +34,26 @@ class Program
                 taskItem.Category = args.Length > 2 ? args[2] : string.Empty;
                 taskItem.Save();
 
-                AnsiConsole.WriteLine("Task added.");
-                AnsiConsole.WriteLine();
+                Console.WriteLine("Task added.");
+                Console.WriteLine();
                 return;
 
             case "edit":
                 if (!IsPositiveInterger(argument))
                 {
-                    AnsiConsole.WriteLine("Please enter an ID.");
+                    Console.WriteLine("Please enter an ID.");
                     break;
                 }
-                AnsiConsole.WriteLine($"parameters: {argument}");
+                Console.WriteLine($"parameters: {argument}");
                 break;
 
             case "done":
                 if (!IsPositiveInterger(argument))
                 {
-                    AnsiConsole.WriteLine("Please enter an ID.");
+                    Console.WriteLine("Please enter an ID.");
                     break;
                 }
-                AnsiConsole.WriteLine($"Task ID: {argument} completed.");
+                Console.WriteLine($"Task ID: {argument} completed.");
                 break;
 
             case "list":
@@ -71,7 +69,7 @@ class Program
                 break;
         }
 
-        AnsiConsole.WriteLine();
+        Console.WriteLine();
     }
 
 
@@ -82,43 +80,64 @@ class Program
 
     static void ShowAllTasks()
     {
-        AnsiConsole.Clear();
-        AnsiConsole.WriteLine();
+        Console.Clear();
+        Console.WriteLine();
 
         var list = TaskItem.GetAll();
 
-        var grid = new Grid();
-        grid.AddColumn(new GridColumn());
-        grid.AddColumn(new GridColumn());
-        grid.AddColumn(new GridColumn().PadLeft(6).Alignment(Justify.Right));
-        grid.AddRow("ID", "Title", "Category");
-        grid.AddRow("--", "-----------", "--------");
+        if (list.Count == 0)
+        {
+            Console.WriteLine("0 tasks.");
+            return;
+        }
+
+        int paddingCount = GetMaxTitleLength(list) + 5;
+
+        Console.WriteLine(
+                "ID".PadRight(5) +
+                "Title".PadRight(paddingCount) +
+                "Category");
+
+        Console.WriteLine(
+                "--".PadRight(5) +
+                "-----".PadRight(paddingCount) +
+                "--------");
+
         foreach (var item in list)
         {
-            grid.AddRow(item.Id.ToString(), item.Title, item.Category);
+            Console.WriteLine(
+                    item.Id.ToString().PadRight(5) +
+                    item.Title.PadRight(paddingCount) +
+                    item.Category);
         }
-        grid.AddRow();
-        grid.AddRow(list.Count.ToString() + " task(s).");
-        grid.AddRow();
+    }
 
-        AnsiConsole.Write(grid);
+    static int GetMaxTitleLength(List<TaskItem> items)
+    {
+        int maxLength = 0;
+        foreach (var item in items)
+        {
+            maxLength = item.Title.Length > maxLength ? item.Title.Length : maxLength;
+        }
+        return maxLength;
+
     }
 
     static void ShowHelpMenu()
     {
-        AnsiConsole.WriteLine();
-        AnsiConsole.WriteLine("Usage:");
-        AnsiConsole.WriteLine("  task add <title> []");
+        Console.WriteLine();
+        Console.WriteLine("Usage:");
+        Console.WriteLine("  task add <title> []");
 
-        var grid = new Grid();
-        grid.AddColumn(new GridColumn().NoWrap());
-        grid.AddColumn(new GridColumn().PadLeft(2));
-        grid.AddRow("Options:");
-        grid.AddRow("  [blue]-h[/], [blue]--help[/]", "Show command line help.");
-        grid.AddRow("  [blue]-c[/], [blue]--configuration[/] <CONFIGURATION>", "The configuration to run for.");
-        grid.AddRow("  [blue]-v[/], [blue]--verbosity[/] <LEVEL>", "Set the [grey]MSBuild[/] verbosity level.");
-
-        AnsiConsole.Write(grid);
+        // var grid = new Grid();
+        // grid.AddColumn(new GridColumn().NoWrap());
+        // grid.AddColumn(new GridColumn().PadLeft(2));
+        // grid.AddRow("Options:");
+        // grid.AddRow("  [blue]-h[/], [blue]--help[/]", "Show command line help.");
+        // grid.AddRow("  [blue]-c[/], [blue]--configuration[/] <CONFIGURATION>", "The configuration to run for.");
+        // grid.AddRow("  [blue]-v[/], [blue]--verbosity[/] <LEVEL>", "Set the [grey]MSBuild[/] verbosity level.");
+        //
+        // Console.Write(grid);
 
     }
 
