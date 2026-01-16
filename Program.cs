@@ -24,6 +24,8 @@ class Program
             case "add":
                 if (string.IsNullOrWhiteSpace(argument))
                 {
+                    ShowAllTasks();
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
                     Console.WriteLine("Please enter a task description.");
                     Console.WriteLine();
                     return;
@@ -34,6 +36,7 @@ class Program
                 taskItem.Category = args.Length > 2 ? args[2] : string.Empty;
                 taskItem.Save();
 
+                ShowAllTasks();
                 Console.WriteLine("Task added.");
                 Console.WriteLine();
                 return;
@@ -41,8 +44,11 @@ class Program
             case "edit":
                 if (!IsPositiveInterger(argument))
                 {
-                    Console.WriteLine("Please enter an ID.");
-                    break;
+                    ShowAllTasks();
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.WriteLine("Please enter an ID to edit.");
+                    Console.WriteLine();
+                    return;
                 }
                 Console.WriteLine($"parameters: {argument}");
                 break;
@@ -105,11 +111,26 @@ class Program
 
         foreach (var item in list)
         {
-            Console.WriteLine(
-                    item.Id.ToString().PadRight(5) +
-                    item.Title.PadRight(paddingCount) +
-                    item.Category);
+            Console.ResetColor();
+
+            if (item.IsCompleted)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine(
+                        item.Id.ToString().PadRight(5) +
+                        item.Title.PadRight(paddingCount) +
+                        item.Category);
+            }
+            else
+            {
+                Console.WriteLine(
+                        item.Id.ToString().PadRight(5) +
+                        item.Title.PadRight(paddingCount) +
+                        item.Category);
+            }
         }
+
+        Console.WriteLine();
     }
 
     static int GetMaxTitleLength(List<TaskItem> items)
