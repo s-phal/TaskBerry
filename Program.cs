@@ -18,18 +18,21 @@ class Program
 
         string command = args[0];
         string argument = args.Length > 1 ? args[1] : string.Empty;
+        string title = argument;
         string flag = args.Length > 2 ? args[2] : string.Empty;
         switch (command)
         {
             case "add":
-                if (string.IsNullOrWhiteSpace(argument))
+                if (string.IsNullOrWhiteSpace(title))
                 {
-                    ShowAllTasks();
-                    Console.ForegroundColor = ConsoleColor.DarkRed;
-                    Console.WriteLine("Please enter a task description.");
-                    Console.WriteLine();
+                    ShowErrorMessage("Please enter a task title.");
                     return;
                 }
+
+                // add title without using quotes
+                // get length of args. loop through, check for --category flag, if none treat all as title string
+                // stop at --category flag if availabe
+
 
                 var taskItem = new TaskItem();
                 taskItem.Title = argument;
@@ -37,8 +40,7 @@ class Program
                 taskItem.Save();
 
                 ShowAllTasks();
-                Console.WriteLine("Task added.");
-                Console.WriteLine();
+                ShowSuccessMessage("Task added.");
                 return;
 
             case "edit":
@@ -78,6 +80,19 @@ class Program
         Console.WriteLine();
     }
 
+    static void ShowSuccessMessage(string message)
+    {
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine(message);
+        Console.WriteLine();
+    }
+
+    static void ShowErrorMessage(string message)
+    {
+        Console.ForegroundColor = ConsoleColor.DarkRed;
+        Console.WriteLine(message);
+        Console.WriteLine();
+    }
 
     static bool IsPositiveInterger(string input)
     {
