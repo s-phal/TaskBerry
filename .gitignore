@@ -4,5 +4,4 @@
 **/.vs/
 **/*__virtual.html
 **/*.sln
-**/*.db
-/taskberry.db
+/*.db
