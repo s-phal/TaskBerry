@@ -1,189 +1,250 @@
-﻿namespace TaskBerry;
+﻿using System;
+
+namespace TaskBerry;
 
 class Program
 {
 
-	static void Main(string[] args)
-	{
-		TaskItem.CreateTableIfNotExists();
+    static void Main(string[] args)
+    {
 
-		Console.Clear();
-		Console.WriteLine();
+        TaskItem.CreateTableIfNotExists();
 
-		if (args.Length == 0)
-		{
-			ShowAllTasks();
-			return;
-		}
+        Console.Clear();
+        Console.WriteLine();
 
-		string command = args[0];
-		string argument = args.Length > 1 ? args[1] : string.Empty;
-		string title = argument;
-		int taskId = int.TryParse(argument, out var id) ? id : 0;
+        if (args.Length == 0)
+        {
+            ShowAllTasks();
+            return;
+        }
 
-		string flag = args.Length > 2 ? args[2] : string.Empty;
-
-		switch (command)
-		{
-			case "add":
-				if (string.IsNullOrWhiteSpace(title))
-				{
-					PrintErrorMessage("Please enter a task title.");
-					return;
-				}
-
-				// add title without using quotes
-				// get length of args. loop through, check for --category flag, if none treat all as title string
-				// stop at --category flag if availabe
+        string command = args[0];
+        string argument = args.Length > 1 ? args[1] : string.Empty;
+        string title = argument;
+        int taskId = int.TryParse(argument, out var id) ? id : 0;
 
 
-				var taskItem = new TaskItem();
-				taskItem.Title = argument;
-				taskItem.Category = args.Length > 2 ? args[2] : string.Empty;
-				taskItem.Save();
 
-				ShowAllTasks();
-				PrintSuccessMessage("Task added.");
-				return;
+        switch (command)
+        {
+            case "add":
+                {
+                    if (string.IsNullOrWhiteSpace(title))
+                    {
+                        PrintErrorMessage("Please enter a task title.");
+                        return;
+                    }
 
-			case "edit":
-				if (taskId == 0)
-				{
-					ShowAllTasks();
-					PrintErrorMessage("Please enter a valid Task ID.");
-					return;
-				}
-				ShowAllTasks();
-				PrintSuccessMessage($"[{taskId}] Task updated.");
-				return;
+                    var taskItem = new TaskItem();
+                    taskItem.Title = GetTitle(args);
+                    taskItem.Category = GetCategory(args);
+                    taskItem.Save();
 
-			case "done":
-				if (taskId == 0)
-				{
-					ShowAllTasks();
-					PrintErrorMessage("Please enter a valid Task ID.");
-					return;
-				}
+                    ShowAllTasks();
+                    PrintSuccessMessage("Task added.");
+                    return;
+                }
 
-				ShowAllTasks();
-				PrintSuccessMessage($"[{taskId}] Task updated.");
-				return;
 
-			case "list":
-				ShowAllTasks();
-				break;
+            case "edit":
+                {
+                    if (taskId == 0)
+                    {
+                        ShowAllTasks();
+                        PrintErrorMessage("Please enter a valid Task ID.");
+                        return;
+                    }
+                    var argList = args.ToList();
 
-			case "help":
-				ShowHelpMenu();
-				break;
+                    argList.RemoveAt(1);
 
-			default:
-				ShowHelpMenu();
-				break;
-		}
+                    args = argList.ToArray();
 
-		Console.WriteLine();
-	}
+                    var taskItem = new TaskItem();
+                    taskItem.Id = taskId;
+                    taskItem.Title = GetTitle(args);
+                    taskItem.Category = GetCategory(args);
+                    taskItem.Save();
 
-	static void GetTitle(string[] args)
-	{
-		string title = string.Empty;
-		foreach (string arg in args.Skip(1))
-		{
-			title = title + arg;
-		}
+                    ShowAllTasks();
+                    PrintSuccessMessage($"[{taskId}] Task updated.");
+                    return;
+                }
 
-	}
+            case "done":
+                {
+                    if (taskId == 0)
+                    {
+                        ShowAllTasks();
+                        PrintErrorMessage("Please enter a valid Task ID.");
+                        return;
+                    }
 
-	static void PrintSuccessMessage(string message)
-	{
-		Console.ForegroundColor = ConsoleColor.Green;
-		Console.WriteLine(message);
-		Console.WriteLine();
-		Console.ResetColor();
-	}
 
-	static void PrintErrorMessage(string message)
-	{
-		Console.ForegroundColor = ConsoleColor.DarkRed;
-		Console.WriteLine(message);
-		Console.WriteLine();
-		Console.ResetColor();
-	}
 
-	static void PrintRow(string taskId, string title, string category, int paddingCount)
-	{
-		Console.WriteLine(
-			taskId.PadRight(5) +
-			title.PadRight(paddingCount) +
-			category
-		);
-	}
 
-	static void ShowAllTasks()
-	{
-		Console.Clear();
-		Console.WriteLine();
+                    var taskItem = new TaskItem();
+                    taskItem = TaskItem.GetByID(taskId);
 
-		var tasks = TaskItem.GetAll();
+                    if (taskItem == null)
+                    {
+                        ShowAllTasks();
+                        PrintErrorMessage("Please enter a valid Task ID.");
+                        return;
+                    }
 
-		if (tasks.Count == 0)
-		{
-			Console.WriteLine("0 tasks.");
-			return;
-		}
+                    taskItem.IsCompleted = true;
+                    taskItem.Save();
+                    PrintSuccessMessage($"[{taskId}] Task updated.");
+                    ShowAllTasks();
+                    return;
 
-		int paddingCount = GetMaxTitleLength(tasks) + 5;
+                }
 
-		PrintRow("ID", "Title", "Category", paddingCount);
-		PrintRow("--", "-----", "--------", paddingCount);
+            case "list":
+                ShowAllTasks();
+                break;
 
-		foreach (var task in tasks)
-		{
-			Console.ResetColor();
+            case "help":
+                ShowHelpMenu();
+                break;
 
-			if (task.IsCompleted)
-			{
-				Console.ForegroundColor = ConsoleColor.DarkGray;
-				PrintRow(task.Id.ToString(), task.Title, task.Category, paddingCount);
-			}
-			else
-			{
-				PrintRow(task.Id.ToString(), task.Title, task.Category, paddingCount);
-			}
-		}
+            default:
+                ShowHelpMenu();
+                break;
+        }
 
-		Console.WriteLine();
-	}
+        Console.WriteLine("shouldnt hit");
+        Console.ReadKey();
 
-	static int GetMaxTitleLength(List<TaskItem> items)
-	{
-		int maxLength = 0;
-		foreach (var item in items)
-		{
-			maxLength = item.Title.Length > maxLength ? item.Title.Length : maxLength;
-		}
-		return maxLength;
+    }
 
-	}
+    private static string GetCategory(string[] args)
+    {
+        string category = string.Empty;
 
-	static void ShowHelpMenu()
-	{
-		Console.WriteLine();
-		Console.WriteLine("Usage:");
-		Console.WriteLine("  task add <title> []");
+        for (int i = 1; i < args.Length; i++)
+        {
+            if (args[i].ToLower().Equals("--cat") || args[i].ToLower().Equals("--category"))
+            {
+                category = args[i + 1];
+                break;
+            }
+        }
 
-		// var grid = new Grid();
-		// grid.AddColumn(new GridColumn().NoWrap());
-		// grid.AddColumn(new GridColumn().PadLeft(2));
-		// grid.AddRow("Options:");
-		// grid.AddRow("  [blue]-h[/], [blue]--help[/]", "Show command line help.");
-		// grid.AddRow("  [blue]-c[/], [blue]--configuration[/] <CONFIGURATION>", "The configuration to run for.");
-		// grid.AddRow("  [blue]-v[/], [blue]--verbosity[/] <LEVEL>", "Set the [grey]MSBuild[/] verbosity level.");
-		//
-		// Console.Write(grid);
+        return category;
+    }
 
-	}
+
+
+    static string GetTitle(string[] args)
+    {
+        string title = string.Empty;
+        foreach (string arg in args.Skip(1))
+        {
+            title = $"{title} {arg}";
+            if (arg.StartsWith("--"))
+            {
+                title = title.Replace(arg, "");
+                break;
+            }
+        }
+
+        return title.Trim();
+
+    }
+
+
+    static void PrintSuccessMessage(string message)
+    {
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine(message);
+        Console.WriteLine();
+        Console.ResetColor();
+    }
+
+    static void PrintErrorMessage(string message)
+    {
+        Console.ForegroundColor = ConsoleColor.DarkRed;
+        Console.WriteLine(message);
+        Console.WriteLine();
+        Console.ResetColor();
+    }
+
+    static void PrintRow(string taskId, string title, string category, int paddingCount)
+    {
+        Console.WriteLine(
+            taskId.PadRight(5) +
+            title.PadRight(paddingCount) +
+            category
+        );
+    }
+
+    static void ShowAllTasks()
+    {
+        Console.Clear();
+        Console.WriteLine();
+
+        var tasks = TaskItem.GetAll();
+
+        if (tasks.Count == 0)
+        {
+            Console.WriteLine("0 tasks.");
+            return;
+        }
+
+        int paddingCount = GetMaxTitleLength(tasks) + 5;
+
+        PrintRow("ID", "Title", "Category", paddingCount);
+        PrintRow("--", "-----", "--------", paddingCount);
+
+        foreach (var task in tasks)
+        {
+            Console.ResetColor();
+
+            if (task.IsCompleted)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                PrintRow(task.Id.ToString(), task.Title, task.Category, paddingCount);
+            }
+            else
+            {
+                PrintRow(task.Id.ToString(), task.Title, task.Category, paddingCount);
+            }
+        }
+
+        Console.WriteLine();
+    }
+
+    static int GetMaxTitleLength(List<TaskItem> items)
+    {
+        int maxLength = 0;
+        foreach (var item in items)
+        {
+            maxLength = item.Title.Length > maxLength ? item.Title.Length : maxLength;
+        }
+        return maxLength;
+
+    }
+
+    static void ShowHelpMenu()
+    {
+        Console.WriteLine();
+        Console.WriteLine("Usage:");
+        Console.WriteLine("  task add <title> []");
+
+        // var grid = new Grid();
+        // grid.AddColumn(new GridColumn().NoWrap());
+        // grid.AddColumn(new GridColumn().PadLeft(2));
+        // grid.AddRow("Options:");
+        // grid.AddRow("  [blue]-h[/], [blue]--help[/]", "Show command line help.");
+        // grid.AddRow("  [blue]-c[/], [blue]--configuration[/] <CONFIGURATION>", "The configuration to run for.");
+        // grid.AddRow("  [blue]-v[/], [blue]--verbosity[/] <LEVEL>", "Set the [grey]MSBuild[/] verbosity level.");
+        //
+        // Console.Write(grid);
+
+    }
 
 
 }

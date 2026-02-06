@@ -73,12 +73,12 @@ public class TaskItem
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = """
-            SELECT id as Id,
-        title as Title,
-        category as Category,
-        is_completed
+            SELECT id,
+                   title,
+                   category,
+                   is_completed
             FROM task
-            ORDER BY id;
+            ORDER BY is_completed asc, id;
         """;
 
         using var reader = cmd.ExecuteReader();
@@ -89,16 +89,46 @@ public class TaskItem
         {
             var task = new TaskItem
             {
-                Id = reader.GetInt32(0),
-                Title = reader.GetString(1),
-                Category = reader.GetString(2),
-                IsCompleted = Convert.ToBoolean(reader.GetInt32(3))
+                Id = Convert.ToInt32(reader["id"]),
+                Title = reader["title"].ToString()!,
+                Category = reader["category"].ToString()!,
+                IsCompleted = Convert.ToBoolean(reader["is_completed"])
             };
 
             tasks.Add(task);
         }
 
         return tasks;
+    }
+
+    public static TaskItem? GetByID(int id)
+    {
+        var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = """
+        SELECT id, title, category, is_completed
+        FROM task
+        WHERE id = @id;
+    """;
+        cmd.Parameters.AddWithValue("@id", id);
+
+
+        using var reader = cmd.ExecuteReader();
+
+        if (!reader.Read())
+            return null; 
+
+        var task = new TaskItem
+        {
+            Id = Convert.ToInt32(reader["id"]),
+            Title = reader["title"].ToString()!,
+            Category = reader["category"].ToString()!,
+            IsCompleted = Convert.ToInt32(reader["is_completed"]) != 0
+        };
+
+        return task;
     }
 
 
