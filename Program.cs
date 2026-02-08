@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace TaskBerry;
 
@@ -11,6 +12,7 @@ class Program
         TaskItem.CreateTableIfNotExists();
 
         Console.Clear();
+        Console.ResetColor();
         Console.WriteLine();
 
         if (args.Length == 0)
@@ -19,104 +21,257 @@ class Program
             return;
         }
 
-        string command = args[0];
+        var commands = new Dictionary<string, Action<string[]>>
+        {
+            ["add"] = HandleAdd,
+            ["update"] = HandleUpdate,
+            ["done"] = HandleDone,
+            ["undone"] = HandleUndone,
+            ["list"] = HandleList,
+            ["delete"] = HandleDelete
+        };
+
+        var command = args[0].ToLower();
+
+        if (!commands.TryGetValue(command, out var handler))
+        {
+            ShowHelpMenu();
+            return;
+        }
+
+        handler(args);
+
+    }
+
+    private static void HandleDelete(string[] args)
+    {
         string argument = args.Length > 1 ? args[1] : string.Empty;
-        string title = argument;
+        int taskId = int.TryParse(argument, out var id) ? id : 0;
+
+        var taskItem = new TaskItem();
+        taskItem = TaskItem.GetByID(taskId);
+
+        if (taskItem == null)
+        {
+            ShowAllTasks();
+            PrintErrorMessage("Please enter a valid Task ID.");
+            return;
+        }
+
+        taskItem.Delete();
+
+        ShowAllTasks();
+        PrintSuccessMessage($"[{taskId}] Task removed.");
+        return;
+    }
+
+    private static void HandleList(string[] args)
+    {
+        string argument = args.Length > 1 ? args[1] : string.Empty;
+        string category = argument.ToLower();
+        string all = args.Length > 2 ? args[2] : string.Empty;
+        bool showCompleted = all.Equals("all") ? true : false;
+
+        if (category == "all")
+        {
+            ShowAllTasks("", true);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(category))
+        {
+            ShowAllTasks();
+            PrintErrorMessage("Please enter a category.");
+            return;
+        }
+
+        ShowAllTasks(category, showCompleted);
+        return;
+    }
+
+    private static void HandleUndone(string[] args)
+    {
+        string argument = args.Length > 1 ? args[1] : string.Empty;
+        int taskId = int.TryParse(argument, out var id) ? id : 0;
+
+        var taskItem = new TaskItem();
+        taskItem = TaskItem.GetByID(taskId);
+
+        if (taskItem == null)
+        {
+            ShowAllTasks();
+            PrintErrorMessage("Please enter a valid Task ID.");
+            return;
+        }
+
+        taskItem.IsCompleted = false;
+        taskItem.Save();
+
+        ShowAllTasks();
+        PrintSuccessMessage($"[{taskId}] Task updated.");
+        return;
+    }
+
+    private static void HandleDone(string[] args)
+    {
+        string argument = args.Length > 1 ? args[1] : string.Empty;
         int taskId = int.TryParse(argument, out var id) ? id : 0;
 
 
+        var taskItem = new TaskItem();
+        taskItem = TaskItem.GetByID(taskId);
 
-        switch (command)
+        if (taskItem == null)
         {
-            case "add":
-                {
-                    if (string.IsNullOrWhiteSpace(title))
-                    {
-                        PrintErrorMessage("Please enter a task title.");
-                        return;
-                    }
-
-                    var taskItem = new TaskItem();
-                    taskItem.Title = GetTitle(args);
-                    taskItem.Category = GetCategory(args);
-                    taskItem.Save();
-
-                    ShowAllTasks();
-                    PrintSuccessMessage("Task added.");
-                    return;
-                }
-
-
-            case "edit":
-                {
-                    if (taskId == 0)
-                    {
-                        ShowAllTasks();
-                        PrintErrorMessage("Please enter a valid Task ID.");
-                        return;
-                    }
-                    var argList = args.ToList();
-
-                    argList.RemoveAt(1);
-
-                    args = argList.ToArray();
-
-                    var taskItem = new TaskItem();
-                    taskItem.Id = taskId;
-                    taskItem.Title = GetTitle(args);
-                    taskItem.Category = GetCategory(args);
-                    taskItem.Save();
-
-                    ShowAllTasks();
-                    PrintSuccessMessage($"[{taskId}] Task updated.");
-                    return;
-                }
-
-            case "done":
-                {
-                    if (taskId == 0)
-                    {
-                        ShowAllTasks();
-                        PrintErrorMessage("Please enter a valid Task ID.");
-                        return;
-                    }
-
-
-
-
-                    var taskItem = new TaskItem();
-                    taskItem = TaskItem.GetByID(taskId);
-
-                    if (taskItem == null)
-                    {
-                        ShowAllTasks();
-                        PrintErrorMessage("Please enter a valid Task ID.");
-                        return;
-                    }
-
-                    taskItem.IsCompleted = true;
-                    taskItem.Save();
-                    PrintSuccessMessage($"[{taskId}] Task updated.");
-                    ShowAllTasks();
-                    return;
-
-                }
-
-            case "list":
-                ShowAllTasks();
-                break;
-
-            case "help":
-                ShowHelpMenu();
-                break;
-
-            default:
-                ShowHelpMenu();
-                break;
+            ShowAllTasks();
+            PrintErrorMessage("Please enter a valid Task ID.");
+            return;
         }
 
-        Console.WriteLine("shouldnt hit");
-        Console.ReadKey();
+        taskItem.IsCompleted = true;
+        taskItem.Save();
+
+        ShowAllTasks();
+        PrintSuccessMessage($"[{taskId}] Task updated.");
+        return;
+    }
+
+    private static void HandleUpdate(string[] args)
+    {
+
+        string argument = args.Length > 1 ? args[1] : string.Empty;
+        int taskId = int.TryParse(argument, out var id) ? id : 0;
+
+        if (taskId == 0)
+        {
+            ShowAllTasks();
+            PrintErrorMessage("Please enter a valid Task ID.");
+            return;
+        }
+
+        var argList = args.ToList();
+        argList.RemoveAt(1);
+
+        args = argList.ToArray();
+
+        if (string.IsNullOrEmpty(GetTitle(args)))
+        {
+            ShowAllTasks();
+            PrintErrorMessage($"[{taskId}] Please include a title.");
+            return;
+        }
+
+        var taskItem = new TaskItem();
+        taskItem.Id = taskId;
+        taskItem.Title = GetTitle(args);
+        taskItem.Category = GetCategory(args);
+        taskItem.IsImportant = CheckImportant(args);
+        taskItem.Save();
+
+        ShowAllTasks();
+        PrintSuccessMessage($"[{taskId}] Task updated.");
+        return;
+    }
+
+    private static void HandleAdd(string[] args)
+    {
+
+        if (string.IsNullOrWhiteSpace(GetTitle(args)))
+        {
+            ShowAllTasks();
+            PrintErrorMessage("Please enter a task title.");
+            return;
+        }
+
+        var taskItem = new TaskItem
+        {
+            Title = GetTitle(args),
+            Category = GetCategory(args),
+            IsImportant = CheckImportant(args)
+        };
+
+        taskItem.Save();
+
+        ShowAllTasks();
+        PrintSuccessMessage("Task added.");
+    }
+
+    private static bool CheckImportant(string[] args)
+    {
+        return args.Any(a => a.ToLower().Equals("--i"));
+    }
+
+    static List<TaskItem> LoadTasks(string category)
+    {
+        return string.IsNullOrEmpty(category) ? TaskItem.GetAll() : TaskItem.GetByCategory(category);
+    }
+
+    private static void ShowAllTasks(string category = "", bool showCompleted = false)
+    {
+        Console.Clear();
+        Console.WriteLine();
+
+        var tasks = LoadTasks(category);
+
+        if (tasks.Count == 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(string.IsNullOrEmpty(category) ? "You currently have 0 tasks." : $"[{category}] currently has 0 tasks.");
+            Console.WriteLine();
+            return;
+        }
+
+
+        int paddingCount = GetMaxTitleLength(tasks) + 5;
+
+        PrintRow("ID", "Title", "Category", paddingCount);
+        PrintRow("--", "-----", "--------", paddingCount);
+
+        bool useDarkGray = true;
+
+        foreach (var task in tasks)
+        {
+            Console.BackgroundColor = useDarkGray ? ConsoleColor.DarkGray : ConsoleColor.Black;
+
+            if (task.IsCompleted == false)
+            {
+                Console.ForegroundColor = ConsoleColor.White;
+                if (task.IsImportant)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                }
+                PrintRow(task.Id.ToString(), task.Title, task.Category, paddingCount);
+            }
+
+            useDarkGray = !useDarkGray;
+
+        }
+
+
+        if (showCompleted)
+        {
+            Console.WriteLine();
+            Console.WriteLine();
+
+            useDarkGray = true;
+
+            foreach (var task in tasks)
+            {
+                Console.BackgroundColor = useDarkGray ? ConsoleColor.DarkGray : ConsoleColor.Black;
+
+                if (task.IsCompleted)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkBlue;
+                    PrintRow(task.Id.ToString(), task.Title, task.Category, paddingCount);
+                }
+
+                useDarkGray = !useDarkGray;
+            }
+        }
+
+
+        Console.ResetColor();
+        Console.WriteLine();
 
     }
 
@@ -126,7 +281,7 @@ class Program
 
         for (int i = 1; i < args.Length; i++)
         {
-            if (args[i].ToLower().Equals("--cat") || args[i].ToLower().Equals("--category"))
+            if (args[i].ToLower().Equals("--c"))
             {
                 category = args[i + 1];
                 break;
@@ -152,7 +307,6 @@ class Program
         }
 
         return title.Trim();
-
     }
 
 
@@ -175,47 +329,13 @@ class Program
     static void PrintRow(string taskId, string title, string category, int paddingCount)
     {
         Console.WriteLine(
-            taskId.PadRight(5) +
+            taskId.PadLeft(5).PadRight(10) +
             title.PadRight(paddingCount) +
-            category
+            category.PadRight(10)
         );
     }
 
-    static void ShowAllTasks()
-    {
-        Console.Clear();
-        Console.WriteLine();
 
-        var tasks = TaskItem.GetAll();
-
-        if (tasks.Count == 0)
-        {
-            Console.WriteLine("0 tasks.");
-            return;
-        }
-
-        int paddingCount = GetMaxTitleLength(tasks) + 5;
-
-        PrintRow("ID", "Title", "Category", paddingCount);
-        PrintRow("--", "-----", "--------", paddingCount);
-
-        foreach (var task in tasks)
-        {
-            Console.ResetColor();
-
-            if (task.IsCompleted)
-            {
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                PrintRow(task.Id.ToString(), task.Title, task.Category, paddingCount);
-            }
-            else
-            {
-                PrintRow(task.Id.ToString(), task.Title, task.Category, paddingCount);
-            }
-        }
-
-        Console.WriteLine();
-    }
 
     static int GetMaxTitleLength(List<TaskItem> items)
     {
@@ -232,20 +352,17 @@ class Program
     {
         Console.WriteLine();
         Console.WriteLine("Usage:");
-        Console.WriteLine("  task add <title> []");
-
-        // var grid = new Grid();
-        // grid.AddColumn(new GridColumn().NoWrap());
-        // grid.AddColumn(new GridColumn().PadLeft(2));
-        // grid.AddRow("Options:");
-        // grid.AddRow("  [blue]-h[/], [blue]--help[/]", "Show command line help.");
-        // grid.AddRow("  [blue]-c[/], [blue]--configuration[/] <CONFIGURATION>", "The configuration to run for.");
-        // grid.AddRow("  [blue]-v[/], [blue]--verbosity[/] <LEVEL>", "Set the [grey]MSBuild[/] verbosity level.");
-        //
-        // Console.Write(grid);
-
+        Console.WriteLine("  task add <string> --c <string> --i          : Create task with category, mark task as important.");
+        Console.WriteLine("  task update ID <string> --c <String>        : Updates the task title and category.");
+        Console.WriteLine("  task list                                   : List all pending tasks.");
+        Console.WriteLine("  task list <string>                          : List all pending tasks with specified category.");
+        Console.WriteLine("  task list <string> all                      : List all tasks with specified category.");
+        Console.WriteLine("  task list all                               : List all tasks.");
+        Console.WriteLine("  task done ID                                : Mark task completed.");
+        Console.WriteLine("  task undone ID                              : Mark task pending.");
+        Console.WriteLine("  task delete ID                              : Delete task.");
+        Console.WriteLine();
     }
-
 
 }
 
