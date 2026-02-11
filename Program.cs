@@ -1,14 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿namespace TaskBerry;
 
-namespace TaskBerry;
-
-class Program
+internal class Program
 {
-
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
-
         TaskItem.CreateTableIfNotExists();
 
         Console.Clear();
@@ -40,13 +35,12 @@ class Program
         }
 
         handler(args);
-
     }
 
     private static void HandleDelete(string[] args)
     {
-        string argument = args.Length > 1 ? args[1] : string.Empty;
-        int taskId = int.TryParse(argument, out var id) ? id : 0;
+        var argument = args.Length > 1 ? args[1] : string.Empty;
+        var taskId = int.TryParse(argument, out var id) ? id : 0;
 
         var taskItem = new TaskItem();
         taskItem = TaskItem.GetByID(taskId);
@@ -62,15 +56,14 @@ class Program
 
         ShowAllTasks();
         PrintSuccessMessage($"[{taskId}] Task removed.");
-        return;
     }
 
     private static void HandleList(string[] args)
     {
-        string argument = args.Length > 1 ? args[1] : string.Empty;
-        string category = argument.ToLower();
-        string all = args.Length > 2 ? args[2] : string.Empty;
-        bool showCompleted = all.Equals("all") ? true : false;
+        var argument = args.Length > 1 ? args[1] : string.Empty;
+        var category = argument.ToLower();
+        var all = args.Length > 2 ? args[2] : string.Empty;
+        var showCompleted = all.Equals("all") ? true : false;
 
         if (category == "all")
         {
@@ -81,18 +74,16 @@ class Program
         if (string.IsNullOrEmpty(category))
         {
             ShowAllTasks();
-            PrintErrorMessage("Please enter a category.");
             return;
         }
 
         ShowAllTasks(category, showCompleted);
-        return;
     }
 
     private static void HandleUndone(string[] args)
     {
-        string argument = args.Length > 1 ? args[1] : string.Empty;
-        int taskId = int.TryParse(argument, out var id) ? id : 0;
+        var argument = args.Length > 1 ? args[1] : string.Empty;
+        var taskId = int.TryParse(argument, out var id) ? id : 0;
 
         var taskItem = new TaskItem();
         taskItem = TaskItem.GetByID(taskId);
@@ -109,13 +100,12 @@ class Program
 
         ShowAllTasks();
         PrintSuccessMessage($"[{taskId}] Task updated.");
-        return;
     }
 
     private static void HandleDone(string[] args)
     {
-        string argument = args.Length > 1 ? args[1] : string.Empty;
-        int taskId = int.TryParse(argument, out var id) ? id : 0;
+        var argument = args.Length > 1 ? args[1] : string.Empty;
+        var taskId = int.TryParse(argument, out var id) ? id : 0;
 
 
         var taskItem = new TaskItem();
@@ -133,14 +123,12 @@ class Program
 
         ShowAllTasks();
         PrintSuccessMessage($"[{taskId}] Task updated.");
-        return;
     }
 
     private static void HandleUpdate(string[] args)
     {
-
-        string argument = args.Length > 1 ? args[1] : string.Empty;
-        int taskId = int.TryParse(argument, out var id) ? id : 0;
+        var argument = args.Length > 1 ? args[1] : string.Empty;
+        var taskId = int.TryParse(argument, out var id) ? id : 0;
 
         if (taskId == 0)
         {
@@ -170,12 +158,10 @@ class Program
 
         ShowAllTasks();
         PrintSuccessMessage($"[{taskId}] Task updated.");
-        return;
     }
 
     private static void HandleAdd(string[] args)
     {
-
         if (string.IsNullOrWhiteSpace(GetTitle(args)))
         {
             ShowAllTasks();
@@ -201,7 +187,7 @@ class Program
         return args.Any(a => a.ToLower().Equals("--i"));
     }
 
-    static List<TaskItem> LoadTasks(string category)
+    private static List<TaskItem> LoadTasks(string category)
     {
         return string.IsNullOrEmpty(category) ? TaskItem.GetAll() : TaskItem.GetByCategory(category);
     }
@@ -216,35 +202,33 @@ class Program
         if (tasks.Count == 0)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(string.IsNullOrEmpty(category) ? "You currently have 0 tasks." : $"[{category}] currently has 0 tasks.");
+            Console.WriteLine(string.IsNullOrEmpty(category)
+                ? "You currently have 0 tasks."
+                : $"[{category}] currently has 0 tasks.");
             Console.WriteLine();
             return;
         }
 
 
-        int paddingCount = GetMaxTitleLength(tasks) + 5;
+        var paddingCount = GetMaxTitleLength(tasks) + 5;
 
         PrintRow("ID", "Title", "Category", paddingCount);
         PrintRow("--", "-----", "--------", paddingCount);
 
-        bool useDarkGray = true;
+        var useDarkGray = true;
 
         foreach (var task in tasks)
         {
             Console.BackgroundColor = useDarkGray ? ConsoleColor.DarkGray : ConsoleColor.Black;
 
-            if (task.IsCompleted == false)
+            if (!task.IsCompleted)
             {
                 Console.ForegroundColor = ConsoleColor.White;
-                if (task.IsImportant)
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                }
+                if (task.IsImportant) Console.ForegroundColor = ConsoleColor.DarkYellow;
                 PrintRow(task.Id.ToString(), task.Title, task.Category, paddingCount);
             }
 
             useDarkGray = !useDarkGray;
-
         }
 
 
@@ -272,31 +256,27 @@ class Program
 
         Console.ResetColor();
         Console.WriteLine();
-
     }
 
     private static string GetCategory(string[] args)
     {
-        string category = string.Empty;
+        var category = string.Empty;
 
-        for (int i = 1; i < args.Length; i++)
-        {
+        for (var i = 1; i < args.Length; i++)
             if (args[i].ToLower().Equals("--c"))
             {
                 category = args[i + 1];
                 break;
             }
-        }
 
         return category;
     }
 
 
-
-    static string GetTitle(string[] args)
+    private static string GetTitle(string[] args)
     {
-        string title = string.Empty;
-        foreach (string arg in args.Skip(1))
+        var title = string.Empty;
+        foreach (var arg in args.Skip(1))
         {
             title = $"{title} {arg}";
             if (arg.StartsWith("--"))
@@ -310,7 +290,7 @@ class Program
     }
 
 
-    static void PrintSuccessMessage(string message)
+    private static void PrintSuccessMessage(string message)
     {
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine(message);
@@ -318,7 +298,7 @@ class Program
         Console.ResetColor();
     }
 
-    static void PrintErrorMessage(string message)
+    private static void PrintErrorMessage(string message)
     {
         Console.ForegroundColor = ConsoleColor.DarkRed;
         Console.WriteLine(message);
@@ -326,7 +306,7 @@ class Program
         Console.ResetColor();
     }
 
-    static void PrintRow(string taskId, string title, string category, int paddingCount)
+    private static void PrintRow(string taskId, string title, string category, int paddingCount)
     {
         Console.WriteLine(
             taskId.PadLeft(5).PadRight(10) +
@@ -336,26 +316,24 @@ class Program
     }
 
 
-
-    static int GetMaxTitleLength(List<TaskItem> items)
+    private static int GetMaxTitleLength(List<TaskItem> items)
     {
-        int maxLength = 0;
-        foreach (var item in items)
-        {
-            maxLength = item.Title.Length > maxLength ? item.Title.Length : maxLength;
-        }
+        var maxLength = 0;
+        foreach (var item in items) maxLength = item.Title.Length > maxLength ? item.Title.Length : maxLength;
         return maxLength;
-
     }
 
-    static void ShowHelpMenu()
+
+    private static void ShowHelpMenu()
     {
         Console.WriteLine();
         Console.WriteLine("Usage:");
-        Console.WriteLine("  task add <string> --c <string> --i          : Create task with category, mark task as important.");
+        Console.WriteLine(
+            "  task add <string> --c <string> --i          : Create task with category, mark task as important.");
         Console.WriteLine("  task update ID <string> --c <String>        : Updates the task title and category.");
         Console.WriteLine("  task list                                   : List all pending tasks.");
-        Console.WriteLine("  task list <string>                          : List all pending tasks with specified category.");
+        Console.WriteLine(
+            "  task list <string>                          : List all pending tasks with specified category.");
         Console.WriteLine("  task list <string> all                      : List all tasks with specified category.");
         Console.WriteLine("  task list all                               : List all tasks.");
         Console.WriteLine("  task done ID                                : Mark task completed.");
@@ -363,6 +341,4 @@ class Program
         Console.WriteLine("  task delete ID                              : Delete task.");
         Console.WriteLine();
     }
-
 }
-
