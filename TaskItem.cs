@@ -4,7 +4,8 @@ using Microsoft.Data.Sqlite;
 
 public class TaskItem
 {
-    private static readonly string _connectionString = "Data Source=taskberry.db;";
+    private static readonly string _connectionString = $"Data Source={Path.Combine(AppContext.BaseDirectory, "taskberry.db")};";
+
 
     public int Id { get; set; } = 0;
     public string Title { get; set; } = string.Empty;
